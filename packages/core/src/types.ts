@@ -1,4 +1,4 @@
-import { Readable } from "stream";
+import type { Readable } from "stream";
 
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
@@ -137,48 +137,63 @@ export enum ModelClass {
 }
 
 /**
+ * Model settings
+ */
+export type ModelSettings = {
+    /** Model name */
+    name: string;
+
+    /** Maximum input tokens */
+    maxInputTokens: number;
+
+    /** Maximum output tokens */
+    maxOutputTokens: number;
+
+    /** Optional frequency penalty */
+    frequency_penalty?: number;
+
+    /** Optional presence penalty */
+    presence_penalty?: number;
+
+    /** Optional repetition penalty */
+    repetition_penalty?: number;
+
+    /** Stop sequences */
+    stop: string[];
+
+    /** Temperature setting */
+    temperature: number;
+
+    /** Optional telemetry configuration (experimental) */
+    experimental_telemetry?: TelemetrySettings;
+};
+
+/** Image model settings */
+export type ImageModelSettings = {
+    name: string;
+    steps?: number;
+};
+
+/** Embedding model settings */
+export type EmbeddingModelSettings = {
+    name: string;
+    dimensions?: number;
+};
+
+/**
  * Configuration for an AI model
  */
 export type Model = {
     /** Optional API endpoint */
     endpoint?: string;
 
-    /** Model settings */
-    settings: {
-        /** Maximum input tokens */
-        maxInputTokens: number;
-
-        /** Maximum output tokens */
-        maxOutputTokens: number;
-
-        /** Optional frequency penalty */
-        frequency_penalty?: number;
-
-        /** Optional presence penalty */
-        presence_penalty?: number;
-
-        /** Optional repetition penalty */
-        repetition_penalty?: number;
-
-        /** Stop sequences */
-        stop: string[];
-
-        /** Temperature setting */
-        temperature: number;
-    };
-
-    /** Optional image generation settings */
-    imageSettings?: {
-        steps?: number;
-    };
-
     /** Model names by size class */
     model: {
-        [ModelClass.SMALL]: string;
-        [ModelClass.MEDIUM]: string;
-        [ModelClass.LARGE]: string;
-        [ModelClass.EMBEDDING]?: string;
-        [ModelClass.IMAGE]?: string;
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
     };
 };
 
@@ -195,6 +210,7 @@ export type Models = {
     [ModelProviderName.TOGETHER]: Model;
     [ModelProviderName.LLAMALOCAL]: Model;
     [ModelProviderName.GOOGLE]: Model;
+    [ModelProviderName.MISTRAL]: Model;
     [ModelProviderName.CLAUDE_VERTEX]: Model;
     [ModelProviderName.REDPILL]: Model;
     [ModelProviderName.OPENROUTER]: Model;
@@ -207,6 +223,14 @@ export type Models = {
     [ModelProviderName.VOLENGINE]: Model;
     [ModelProviderName.NANOGPT]: Model;
     [ModelProviderName.HYPERBOLIC]: Model;
+    [ModelProviderName.VENICE]: Model;
+    [ModelProviderName.NVIDIA]: Model;
+    [ModelProviderName.NINETEEN_AI]: Model;
+    [ModelProviderName.AKASH_CHAT_API]: Model;
+    [ModelProviderName.LIVEPEER]: Model;
+    [ModelProviderName.DEEPSEEK]: Model;
+    [ModelProviderName.INFERA]: Model;
+    [ModelProviderName.ATOMA]: Model;
 };
 
 /**
@@ -222,6 +246,7 @@ export enum ModelProviderName {
     TOGETHER = "together",
     LLAMALOCAL = "llama_local",
     GOOGLE = "google",
+    MISTRAL = "mistral",
     CLAUDE_VERTEX = "claude_vertex",
     REDPILL = "redpill",
     OPENROUTER = "openrouter",
@@ -234,6 +259,15 @@ export enum ModelProviderName {
     VOLENGINE = "volengine",
     NANOGPT = "nanogpt",
     HYPERBOLIC = "hyperbolic",
+    VENICE = "venice",
+    NVIDIA = "nvidia",
+    NINETEEN_AI = "nineteen_ai",
+    AKASH_CHAT_API = "akash_chat_api",
+    LIVEPEER = "livepeer",
+    LETZAI = "letzai",
+    DEEPSEEK = "deepseek",
+    INFERA = "infera",
+    ATOMA = "atoma",
 }
 
 /**
@@ -316,6 +350,8 @@ export interface State {
     knowledge?: string;
     /** Optional knowledge data */
     knowledgeData?: KnowledgeItem[];
+    /** Optional knowledge data */
+    ragKnowledgeData?: RAGKnowledgeItem[];
 
     /** Additional dynamic properties */
     [key: string]: unknown;
@@ -372,7 +408,7 @@ export type Handler = (
     message: Memory,
     state?: State,
     options?: { [key: string]: unknown },
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
 ) => Promise<unknown>;
 
 /**
@@ -380,7 +416,7 @@ export type Handler = (
  */
 export type HandlerCallback = (
     response: Content,
-    files?: any
+    files?: any,
 ) => Promise<Memory[]>;
 
 /**
@@ -389,7 +425,7 @@ export type HandlerCallback = (
 export type Validator = (
     runtime: IAgentRuntime,
     message: Memory,
-    state?: State
+    state?: State,
 ) => Promise<boolean>;
 
 /**
@@ -413,6 +449,9 @@ export interface Action {
 
     /** Validation function */
     validate: Validator;
+
+    /** Whether to suppress the initial message when this action is used */
+    suppressInitialMessage?: boolean;
 }
 
 /**
@@ -463,7 +502,7 @@ export interface Provider {
     get: (
         runtime: IAgentRuntime,
         message: Memory,
-        state?: State
+        state?: State,
     ) => Promise<any>;
 }
 
@@ -559,6 +598,9 @@ export type Media = {
 
     /** Text content */
     text: string;
+
+    /** Content type */
+    contentType?: string;
 };
 
 /**
@@ -607,7 +649,54 @@ export enum Clients {
     TWITTER = "twitter",
     TELEGRAM = "telegram",
     FARCASTER = "farcaster",
+    LENS = "lens",
+    AUTO = "auto",
+    SLACK = "slack",
+    GITHUB = "github",
+    INSTAGRAM = "instagram",
+    SIMSAI = "simsai"
 }
+
+export interface IAgentConfig {
+    [key: string]: string;
+}
+
+export type TelemetrySettings = {
+    /**
+     * Enable or disable telemetry. Disabled by default while experimental.
+     */
+    isEnabled?: boolean;
+    /**
+     * Enable or disable input recording. Enabled by default.
+     *
+     * You might want to disable input recording to avoid recording sensitive
+     * information, to reduce data transfers, or to increase performance.
+     */
+    recordInputs?: boolean;
+    /**
+     * Enable or disable output recording. Enabled by default.
+     *
+     * You might want to disable output recording to avoid recording sensitive
+     * information, to reduce data transfers, or to increase performance.
+     */
+    recordOutputs?: boolean;
+    /**
+     * Identifier for this function. Used to group telemetry data by function.
+     */
+    functionId?: string;
+};
+
+export interface ModelConfiguration {
+    temperature?: number;
+    max_response_length?: number;
+    frequency_penalty?: number;
+    presence_penalty?: number;
+    maxInputTokens?: number;
+    experimental_telemetry?: TelemetrySettings;
+}
+
+export type TemplateType = string | ((options: { state: State }) => string);
+
 /**
  * Configuration for an agent character
  */
@@ -621,6 +710,9 @@ export type Character = {
     /** Optional username */
     username?: string;
 
+    /** Optional email */
+    email?: string;
+
     /** Optional system prompt */
     system?: string;
 
@@ -630,29 +722,51 @@ export type Character = {
     /** Image model provider to use, if different from modelProvider */
     imageModelProvider?: ModelProviderName;
 
+    /** Image Vision model provider to use, if different from modelProvider */
+    imageVisionModelProvider?: ModelProviderName;
+
     /** Optional model endpoint override */
     modelEndpointOverride?: string;
 
     /** Optional prompt templates */
     templates?: {
-        goalsTemplate?: string;
-        factsTemplate?: string;
-        messageHandlerTemplate?: string;
-        shouldRespondTemplate?: string;
-        continueMessageHandlerTemplate?: string;
-        evaluationTemplate?: string;
-        twitterSearchTemplate?: string;
-        twitterPostTemplate?: string;
-        twitterMessageHandlerTemplate?: string;
-        twitterShouldRespondTemplate?: string;
-        farcasterPostTemplate?: string;
-        farcasterMessageHandlerTemplate?: string;
-        farcasterShouldRespondTemplate?: string;
-        telegramMessageHandlerTemplate?: string;
-        telegramShouldRespondTemplate?: string;
-        discordVoiceHandlerTemplate?: string;
-        discordShouldRespondTemplate?: string;
-        discordMessageHandlerTemplate?: string;
+        goalsTemplate?: TemplateType;
+        factsTemplate?: TemplateType;
+        messageHandlerTemplate?: TemplateType;
+        shouldRespondTemplate?: TemplateType;
+        continueMessageHandlerTemplate?: TemplateType;
+        evaluationTemplate?: TemplateType;
+        twitterSearchTemplate?: TemplateType;
+        twitterActionTemplate?: TemplateType;
+        twitterPostTemplate?: TemplateType;
+        twitterMessageHandlerTemplate?: TemplateType;
+        twitterShouldRespondTemplate?: TemplateType;
+        twitterVoiceHandlerTemplate?: TemplateType;
+        instagramPostTemplate?: TemplateType;
+        instagramMessageHandlerTemplate?: TemplateType;
+        instagramShouldRespondTemplate?: TemplateType;
+        farcasterPostTemplate?: TemplateType;
+        lensPostTemplate?: TemplateType;
+        farcasterMessageHandlerTemplate?: TemplateType;
+        lensMessageHandlerTemplate?: TemplateType;
+        farcasterShouldRespondTemplate?: TemplateType;
+        lensShouldRespondTemplate?: TemplateType;
+        telegramMessageHandlerTemplate?: TemplateType;
+        telegramShouldRespondTemplate?: TemplateType;
+        telegramAutoPostTemplate?: string;
+        telegramPinnedMessageTemplate?: string;
+        discordAutoPostTemplate?: string;
+        discordAnnouncementHypeTemplate?: string;
+        discordVoiceHandlerTemplate?: TemplateType;
+        discordShouldRespondTemplate?: TemplateType;
+        discordMessageHandlerTemplate?: TemplateType;
+        slackMessageHandlerTemplate?: TemplateType;
+        slackShouldRespondTemplate?: TemplateType;
+        jeeterPostTemplate?: string;
+        jeeterSearchTemplate?: string;
+        jeeterInteractionTemplate?: string;
+        jeeterMessageHandlerTemplate?: string;
+        jeeterShouldRespondTemplate?: string;
     };
 
     /** Character biography */
@@ -674,7 +788,7 @@ export type Character = {
     adjectives: string[];
 
     /** Optional knowledge base */
-    knowledge?: string[];
+    knowledge?: (string | { path: string; shared?: boolean })[];
 
     /** Supported client platforms */
     clients: Clients[];
@@ -686,6 +800,22 @@ export type Character = {
     settings?: {
         secrets?: { [key: string]: string };
         intiface?: boolean;
+        imageSettings?: {
+            steps?: number;
+            width?: number;
+            height?: number;
+            cfgScale?: number;
+            negativePrompt?: string;
+            numIterations?: number;
+            guidanceScale?: number;
+            seed?: number;
+            modelId?: string;
+            jobId?: string;
+            count?: number;
+            stylePreset?: string;
+            hideWatermark?: boolean;
+            safeMode?: boolean;
+        };
         voice?: {
             model?: string; // For VITS
             url?: string; // Legacy VITS support
@@ -700,12 +830,15 @@ export type Character = {
             };
         };
         model?: string;
+        modelConfig?: ModelConfiguration;
         embeddingModel?: string;
         chains?: {
             evm?: any[];
             solana?: any[];
             [key: string]: any[];
         };
+        transcription?: TranscriptionProvider;
+        ragKnowledge?: boolean;
     };
 
     /** Optional client-specific config */
@@ -713,10 +846,51 @@ export type Character = {
         discord?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+            shouldRespondOnlyToMentions?: boolean;
+            messageSimilarityThreshold?: number;
+            isPartOfTeam?: boolean;
+            teamAgentIds?: string[];
+            teamLeaderId?: string;
+            teamMemberInterestKeywords?: string[];
+            autoPost?: {
+                enabled?: boolean;
+                monitorTime?: number;
+                inactivityThreshold?: number;
+                mainChannelId?: string;
+                announcementChannelIds?: string[];
+                minTimeBetweenPosts?: number;
+            };
         };
         telegram?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+            shouldRespondOnlyToMentions?: boolean;
+            shouldOnlyJoinInAllowedGroups?: boolean;
+            allowedGroupIds?: string[];
+            messageSimilarityThreshold?: number;
+            isPartOfTeam?: boolean;
+            teamAgentIds?: string[];
+            teamLeaderId?: string;
+            teamMemberInterestKeywords?: string[];
+            autoPost?: {
+                enabled?: boolean;
+                monitorTime?: number;
+                inactivityThreshold?: number;
+                mainChannelId?: string;
+                pinnedMessagesGroups?: string[];
+                minTimeBetweenPosts?: number;
+            };
+        };
+        slack?: {
+            shouldIgnoreBotMessages?: boolean;
+            shouldIgnoreDirectMessages?: boolean;
+        };
+        gitbook?: {
+            keywords?: {
+                projectTerms?: string[];
+                generalQueries?: string[];
+            };
+            documentTriggers?: string[];
         };
     };
 
@@ -735,7 +909,49 @@ export type Character = {
         bio: string;
         nicknames?: string[];
     };
+
+    /** Optional Instagram profile */
+    instagramProfile?: {
+        id: string;
+        username: string;
+        bio: string;
+        nicknames?: string[];
+    };
+
+    /** Optional SimsAI profile */
+    simsaiProfile?: {
+        id: string;
+        username: string;
+        screenName: string;
+        bio: string;
+    };
+
+    /** Optional NFT prompt */
+    nft?: {
+        prompt: string;
+    };
+
+    /**Optinal Parent characters to inherit information from */
+    extends?: string[];
+
+    twitterSpaces?: TwitterSpaceDecisionOptions;
 };
+
+export interface TwitterSpaceDecisionOptions {
+    maxSpeakers?: number;
+    topics?: string[];
+    typicalDurationMinutes?: number;
+    idleKickTimeoutMs?: number;
+    minIntervalBetweenSpacesMinutes?: number;
+    businessHoursOnly?: boolean;
+    randomChance?: number;
+    enableIdleMonitor?: boolean;
+    enableSttTts?: boolean;
+    enableRecording?: boolean;
+    voiceId?: string;
+    sttLanguage?: string;
+    speakerMaxDurationMs?: number;
+}
 
 /**
  * Interface for database operations
@@ -769,10 +985,13 @@ export interface IDatabaseAdapter {
 
     getMemoryById(id: UUID): Promise<Memory | null>;
 
+    getMemoriesByIds(ids: UUID[], tableName?: string): Promise<Memory[]>;
+
     getMemoriesByRoomIds(params: {
         tableName: string;
         agentId: UUID;
         roomIds: UUID[];
+        limit?: number;
     }): Promise<Memory[]>;
 
     getCachedEmbeddings(params: {
@@ -817,13 +1036,13 @@ export interface IDatabaseAdapter {
             agentId?: UUID;
             unique?: boolean;
             tableName: string;
-        }
+        },
     ): Promise<Memory[]>;
 
     createMemory(
         memory: Memory,
         tableName: string,
-        unique?: boolean
+        unique?: boolean,
     ): Promise<void>;
 
     removeMemory(memoryId: UUID, tableName: string): Promise<void>;
@@ -833,7 +1052,7 @@ export interface IDatabaseAdapter {
     countMemories(
         roomId: UUID,
         unique?: boolean,
-        tableName?: string
+        tableName?: string,
     ): Promise<number>;
 
     getGoals(params: {
@@ -872,13 +1091,13 @@ export interface IDatabaseAdapter {
 
     getParticipantUserState(
         roomId: UUID,
-        userId: UUID
+        userId: UUID,
     ): Promise<"FOLLOWED" | "MUTED" | null>;
 
     setParticipantUserState(
         roomId: UUID,
         userId: UUID,
-        state: "FOLLOWED" | "MUTED" | null
+        state: "FOLLOWED" | "MUTED" | null,
     ): Promise<void>;
 
     createRelationship(params: { userA: UUID; userB: UUID }): Promise<boolean>;
@@ -889,6 +1108,26 @@ export interface IDatabaseAdapter {
     }): Promise<Relationship | null>;
 
     getRelationships(params: { userId: UUID }): Promise<Relationship[]>;
+
+    getKnowledge(params: {
+        id?: UUID;
+        agentId: UUID;
+        limit?: number;
+        query?: string;
+        conversationContext?: string;
+    }): Promise<RAGKnowledgeItem[]>;
+
+    searchKnowledge(params: {
+        agentId: UUID;
+        embedding: Float32Array;
+        match_threshold: number;
+        match_count: number;
+        searchText?: string;
+    }): Promise<RAGKnowledgeItem[]>;
+
+    createKnowledge(knowledge: RAGKnowledgeItem): Promise<void>;
+    removeKnowledge(id: UUID): Promise<void>;
+    clearKnowledge(agentId: UUID, shared?: boolean): Promise<void>;
 }
 
 export interface IDatabaseCacheAdapter {
@@ -922,11 +1161,14 @@ export interface IMemoryManager {
     }): Promise<Memory[]>;
 
     getCachedEmbeddings(
-        content: string
+        content: string,
     ): Promise<{ embedding: number[]; levenshtein_score: number }[]>;
 
     getMemoryById(id: UUID): Promise<Memory | null>;
-    getMemoriesByRoomIds(params: { roomIds: UUID[] }): Promise<Memory[]>;
+    getMemoriesByRoomIds(params: {
+        roomIds: UUID[];
+        limit?: number;
+    }): Promise<Memory[]>;
     searchMemoriesByEmbedding(
         embedding: number[],
         opts: {
@@ -934,7 +1176,7 @@ export interface IMemoryManager {
             count?: number;
             roomId: UUID;
             unique?: boolean;
-        }
+        },
     ): Promise<Memory[]>;
 
     createMemory(memory: Memory, unique?: boolean): Promise<void>;
@@ -946,9 +1188,46 @@ export interface IMemoryManager {
     countMemories(roomId: UUID, unique?: boolean): Promise<number>;
 }
 
+export interface IRAGKnowledgeManager {
+    runtime: IAgentRuntime;
+    tableName: string;
+
+    getKnowledge(params: {
+        query?: string;
+        id?: UUID;
+        limit?: number;
+        conversationContext?: string;
+        agentId?: UUID;
+    }): Promise<RAGKnowledgeItem[]>;
+    createKnowledge(item: RAGKnowledgeItem): Promise<void>;
+    removeKnowledge(id: UUID): Promise<void>;
+    searchKnowledge(params: {
+        agentId: UUID;
+        embedding: Float32Array | number[];
+        match_threshold?: number;
+        match_count?: number;
+        searchText?: string;
+    }): Promise<RAGKnowledgeItem[]>;
+    clearKnowledge(shared?: boolean): Promise<void>;
+    processFile(file: {
+        path: string;
+        content: string;
+        type: "pdf" | "md" | "txt";
+        isShared: boolean;
+    }): Promise<void>;
+    cleanupDeletedKnowledgeFiles(): Promise<void>;
+    generateScopedId(path: string, isShared: boolean): UUID;
+}
+
 export type CacheOptions = {
     expires?: number;
 };
+
+export enum CacheStore {
+    REDIS = "redis",
+    DATABASE = "database",
+    FILESYSTEM = "filesystem",
+}
 
 export interface ICacheManager {
     get<T = unknown>(key: string): Promise<T | undefined>;
@@ -986,6 +1265,7 @@ export interface IAgentRuntime {
     token: string | null;
     modelProvider: ModelProviderName;
     imageModelProvider: ModelProviderName;
+    imageVisionModelProvider: ModelProviderName;
     character: Character;
     providers: Provider[];
     actions: Action[];
@@ -998,11 +1278,17 @@ export interface IAgentRuntime {
     descriptionManager: IMemoryManager;
     documentsManager: IMemoryManager;
     knowledgeManager: IMemoryManager;
+    ragKnowledgeManager: IRAGKnowledgeManager;
     loreManager: IMemoryManager;
 
     cacheManager: ICacheManager;
 
     services: Map<ServiceType, Service>;
+    // any could be EventEmitter
+    // but I think the real solution is forthcoming as a base client interface
+    clients: Record<string, any>;
+
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
     initialize(): Promise<void>;
 
@@ -1023,15 +1309,15 @@ export interface IAgentRuntime {
         message: Memory,
         responses: Memory[],
         state?: State,
-        callback?: HandlerCallback
+        callback?: HandlerCallback,
     ): Promise<void>;
 
     evaluate(
         message: Memory,
         state?: State,
         didRespond?: boolean,
-        callback?: HandlerCallback
-    ): Promise<string[]>;
+        callback?: HandlerCallback,
+    ): Promise<string[] | null>;
 
     ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
 
@@ -1039,7 +1325,7 @@ export interface IAgentRuntime {
         userId: UUID,
         userName: string | null,
         name: string | null,
-        source: string | null
+        source: string | null,
     ): Promise<void>;
 
     registerAction(action: Action): void;
@@ -1049,7 +1335,7 @@ export interface IAgentRuntime {
         roomId: UUID,
         userName?: string,
         userScreenName?: string,
-        source?: string
+        source?: string,
     ): Promise<void>;
 
     ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
@@ -1058,7 +1344,7 @@ export interface IAgentRuntime {
 
     composeState(
         message: Memory,
-        additionalKeys?: { [key: string]: unknown }
+        additionalKeys?: { [key: string]: unknown },
     ): Promise<State>;
 
     updateRecentMessageState(state: State): Promise<State>;
@@ -1066,14 +1352,14 @@ export interface IAgentRuntime {
 
 export interface IImageDescriptionService extends Service {
     describeImage(
-        imageUrl: string
+        imageUrl: string,
     ): Promise<{ title: string; description: string }>;
 }
 
 export interface ITranscriptionService extends Service {
     transcribeAttachment(audioBuffer: ArrayBuffer): Promise<string | null>;
     transcribeAttachmentLocally(
-        audioBuffer: ArrayBuffer
+        audioBuffer: ArrayBuffer,
     ): Promise<string | null>;
     transcribe(audioBuffer: ArrayBuffer): Promise<string | null>;
     transcribeLocally(audioBuffer: ArrayBuffer): Promise<string | null>;
@@ -1094,7 +1380,7 @@ export interface ITextGenerationService extends Service {
         stop: string[],
         frequency_penalty: number,
         presence_penalty: number,
-        max_tokens: number
+        max_tokens: number,
     ): Promise<any>;
     queueTextCompletion(
         context: string,
@@ -1102,7 +1388,7 @@ export interface ITextGenerationService extends Service {
         stop: string[],
         frequency_penalty: number,
         presence_penalty: number,
-        max_tokens: number
+        max_tokens: number,
     ): Promise<string>;
     getEmbeddingResponse(input: string): Promise<number[] | undefined>;
 }
@@ -1111,7 +1397,7 @@ export interface IBrowserService extends Service {
     closeBrowser(): Promise<void>;
     getPageContent(
         url: string,
-        runtime: IAgentRuntime
+        runtime: IAgentRuntime,
     ): Promise<{ title: string; description: string; bodyContent: string }>;
 }
 
@@ -1126,30 +1412,89 @@ export interface IPdfService extends Service {
 }
 
 export interface IAwsS3Service extends Service {
-    uploadFile(imagePath: string, useSignedUrl: boolean, expiresIn: number ): Promise<{
+    uploadFile(
+        imagePath: string,
+        subDirectory: string,
+        useSignedUrl: boolean,
+        expiresIn: number,
+    ): Promise<{
         success: boolean;
         url?: string;
         error?: string;
     }>;
-    generateSignedUrl(fileName: string, expiresIn: number): Promise<string>
+    generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
-export type SearchResult = {
-    title: string;
-    url: string;
-    content: string;
-    score: number;
-    raw_content: string | null;
-};
+export interface UploadIrysResult {
+    success: boolean;
+    url?: string;
+    error?: string;
+    data?: any;
+}
 
-export type SearchResponse = {
-    query: string;
-    follow_up_questions: string[] | null;
-    answer: string | null;
-    images: string[];
-    results: SearchResult[];
-    response_time: number;
-};
+export interface DataIrysFetchedFromGQL {
+    success: boolean;
+    data: any;
+    error?: string;
+}
+
+export interface GraphQLTag {
+    name: string;
+    values: any[];
+}
+
+export enum IrysMessageType {
+    REQUEST = "REQUEST",
+    DATA_STORAGE = "DATA_STORAGE",
+    REQUEST_RESPONSE = "REQUEST_RESPONSE",
+}
+
+export enum IrysDataType {
+    FILE = "FILE",
+    IMAGE = "IMAGE",
+    OTHER = "OTHER",
+}
+
+export interface IrysTimestamp {
+    from: number;
+    to: number;
+}
+
+export interface IIrysService extends Service {
+    getDataFromAnAgent(
+        agentsWalletPublicKeys: string[],
+        tags: GraphQLTag[],
+        timestamp: IrysTimestamp,
+    ): Promise<DataIrysFetchedFromGQL>;
+    workerUploadDataOnIrys(
+        data: any,
+        dataType: IrysDataType,
+        messageType: IrysMessageType,
+        serviceCategory: string[],
+        protocol: string[],
+        validationThreshold: number[],
+        minimumProviders: number[],
+        testProvider: boolean[],
+        reputation: number[],
+    ): Promise<UploadIrysResult>;
+    providerUploadDataOnIrys(
+        data: any,
+        dataType: IrysDataType,
+        serviceCategory: string[],
+        protocol: string[],
+    ): Promise<UploadIrysResult>;
+}
+
+export interface ITeeLogService extends Service {
+    getInstance(): ITeeLogService;
+    log(
+        agentId: string,
+        roomId: string,
+        userId: string,
+        type: string,
+        content: string,
+    ): Promise<boolean>;
+}
 
 export enum ServiceType {
     IMAGE_DESCRIPTION = "image_description",
@@ -1161,6 +1506,13 @@ export enum ServiceType {
     PDF = "pdf",
     INTIFACE = "intiface",
     AWS_S3 = "aws_s3",
+    BUTTPLUG = "buttplug",
+    SLACK = "slack",
+    VERIFIABLE_LOGGING = "verifiable_logging",
+    IRYS = "irys",
+    TEE_LOG = "tee_log",
+    GOPLUS_SECURITY = "goplus_security",
+    WEB_SEARCH = "web_search",
 }
 
 export enum LoggingLevel {
@@ -1174,9 +1526,133 @@ export type KnowledgeItem = {
     content: Content;
 };
 
+export interface RAGKnowledgeItem {
+    id: UUID;
+    agentId: UUID;
+    content: {
+        text: string;
+        metadata?: {
+            isMain?: boolean;
+            isChunk?: boolean;
+            originalId?: UUID;
+            chunkIndex?: number;
+            source?: string;
+            type?: string;
+            isShared?: boolean;
+            [key: string]: unknown;
+        };
+    };
+    embedding?: Float32Array;
+    createdAt?: number;
+    similarity?: number;
+    score?: number;
+}
+
 export interface ActionResponse {
     like: boolean;
     retweet: boolean;
     quote?: boolean;
     reply?: boolean;
+}
+
+export interface ISlackService extends Service {
+    client: any;
+}
+
+/**
+ * Available verifiable inference providers
+ */
+export enum VerifiableInferenceProvider {
+    RECLAIM = "reclaim",
+    OPACITY = "opacity",
+    PRIMUS = "primus",
+}
+
+/**
+ * Options for verifiable inference
+ */
+export interface VerifiableInferenceOptions {
+    /** Custom endpoint URL */
+    endpoint?: string;
+    /** Custom headers */
+    headers?: Record<string, string>;
+    /** Provider-specific options */
+    providerOptions?: Record<string, unknown>;
+}
+
+/**
+ * Result of a verifiable inference request
+ */
+export interface VerifiableInferenceResult {
+    /** Generated text */
+    text: string;
+    /** Proof */
+    proof: any;
+    /** Proof id */
+    id?: string;
+    /** Provider information */
+    provider: VerifiableInferenceProvider;
+    /** Timestamp */
+    timestamp: number;
+}
+
+/**
+ * Interface for verifiable inference adapters
+ */
+export interface IVerifiableInferenceAdapter {
+    options: any;
+    /**
+     * Generate text with verifiable proof
+     * @param context The input text/prompt
+     * @param modelClass The model class/name to use
+     * @param options Additional provider-specific options
+     * @returns Promise containing the generated text and proof data
+     */
+    generateText(
+        context: string,
+        modelClass: string,
+        options?: VerifiableInferenceOptions,
+    ): Promise<VerifiableInferenceResult>;
+
+    /**
+     * Verify the proof of a generated response
+     * @param result The result containing response and proof to verify
+     * @returns Promise indicating if the proof is valid
+     */
+    verifyProof(result: VerifiableInferenceResult): Promise<boolean>;
+}
+
+export enum TokenizerType {
+    Auto = "auto",
+    TikToken = "tiktoken",
+}
+
+export enum TranscriptionProvider {
+    OpenAI = "openai",
+    Deepgram = "deepgram",
+    Local = "local",
+}
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
+}
+
+export enum KnowledgeScope {
+    SHARED = "shared",
+    PRIVATE = "private",
+}
+
+export enum CacheKeyPrefix {
+    KNOWLEDGE = "knowledge",
+}
+
+export interface DirectoryItem {
+    directory: string;
+    shared?: boolean;
+}
+
+export interface ChunkRow {
+    id: string;
+    // Add other properties if needed
 }

@@ -2,20 +2,20 @@ import {
     composeContext,
     generateImage,
     generateText,
-    generateObjectDEPRECATED,
-} from "@ai16z/eliza";
+    generateObjectDeprecated,
+} from "@elizaos/core";
 import {
-    ActionExample,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type ActionExample,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     type Action,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { idlFactory } from "../canisters/pick-pump/index.did";
-import { _SERVICE } from "../canisters/pick-pump/index.did.d";
-import { ActorCreator, CreateMemeTokenArg } from "../types";
+import type { _SERVICE } from "../canisters/pick-pump/index.did.d";
+import type { ActorCreator, CreateMemeTokenArg } from "../types";
 import { unwrapOption, wrapOption } from "../utils/common/types/options";
 import { unwrapRustResultMap } from "../utils/common/types/results";
 import { icpWalletProvider } from "../providers/wallet";
@@ -148,7 +148,7 @@ export const executeCreateToken: Action = {
             template: createTokenTemplate,
         });
 
-        const response = await generateObjectDEPRECATED({
+        const response = await generateObjectDeprecated({
             runtime,
             context: createTokenContext,
             modelClass: ModelClass.LARGE,

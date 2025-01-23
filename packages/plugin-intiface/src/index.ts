@@ -7,8 +7,8 @@ import type {
     Memory,
     Plugin,
     State,
-} from "@ai16z/eliza";
-import { Service, ServiceType } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { Service, ServiceType } from "@elizaos/core";
 import {
     isPortAvailable,
     startIntifaceEngine,
@@ -518,7 +518,7 @@ const batteryAction: Action = {
             callback({
                 text: `Device battery level is at ${Math.round(batteryLevel * 100)}%`,
             });
-        } catch (err) {
+        } catch {
             callback({
                 text: "Unable to get battery level. Device might not support this feature.",
             });

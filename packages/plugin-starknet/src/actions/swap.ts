@@ -1,19 +1,19 @@
 import {
-    Action,
-    ActionExample,
+    type Action,
+    type ActionExample,
     composeContext,
     elizaLogger,
-    generateObjectDEPRECATED,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    generateObjectDeprecated,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
-} from "@ai16z/eliza";
+    type State,
+} from "@elizaos/core";
 import {
     executeSwap as executeAvnuSwap,
     fetchQuotes,
-    QuoteRequest,
+    type QuoteRequest,
 } from "@avnu/avnu-sdk";
 
 import { getStarknetAccount } from "../utils/index.ts";
@@ -105,7 +105,7 @@ export const executeSwap: Action = {
             template: swapTemplate,
         });
 
-        const response = await generateObjectDEPRECATED({
+        const response = await generateObjectDeprecated({
             runtime,
             context: swapContext,
             modelClass: ModelClass.MEDIUM,

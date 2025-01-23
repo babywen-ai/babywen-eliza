@@ -1,0 +1,37 @@
+{
+    "name": "@elizaos/plugin-abstract",
+    "version": "0.1.9-alpha.1",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": {
+                "@elizaos/source": "./src/index.ts",
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "@elizaos/core": "workspace:*",
+        "@abstract-foundation/agw-client": "1.0.1"
+    },
+    "scripts": {
+        "lint": "eslint --fix  --cache .",
+        "build": "tsup --format esm --no-dts",
+        "dev": "tsup --format esm --no-dts --watch"
+    },
+    "peerDependencies": {
+        "whatwg-url": "7.1.0"
+    },
+    "devDependencies": {
+        "tsup": "8.3.5",
+        "typescript": "4.9"
+    }
+}
