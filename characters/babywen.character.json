@@ -1,6 +1,6 @@
 {
     "name": "BabyWen",
-    "clients": ["twitter", "discord", "telegram"],
+    "clients": ["twitter", "discord"],
     "modelProvider": "openrouter",
     "settings": {
         "voice": {
