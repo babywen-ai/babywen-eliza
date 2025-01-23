@@ -1,7 +1,7 @@
 {
     "name": "BabyWen",
     "clients": ["twitter", "discord", "telegram"],
-    "modelProvider": "openai",
+    "modelProvider": "openrouter",
     "settings": {
         "voice": {
             "model": ""
