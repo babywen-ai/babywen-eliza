@@ -1,5 +1,5 @@
 {
-    "name": "BabyWen",
+    "name": "BabyWen_AI",
     "clients": ["twitter", "discord"],
     "modelProvider": "openrouter",
     "settings": {
